@@ -7,6 +7,7 @@ import { editWebsite } from "@/lib/ai";
 interface FileEntry { path: string; content: string }
 
 /** Convert plain JS data into a value Prisma accepts for a Json column. */
+// KAIROSFORGE Prisma build fix
 function toJson(value: unknown): Prisma.InputJsonValue {
   return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 }
