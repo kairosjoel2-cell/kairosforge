@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSessionUserId } from "@/lib/auth";
 
-interface FileEntry { path: string; content: string }
+/** Convert plain JS data into a value Prisma accepts for a Json column. */
+function toJson(value: unknown): Prisma.InputJsonValue {
+  return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
+}
 
 export async function GET(req: NextRequest) {
   const userId = await getSessionUserId();
@@ -30,7 +34,10 @@ export async function PATCH(req: NextRequest) {
     if (!project) return NextResponse.json({ error: "Not found" }, { status: 404 });
     const updated = await prisma.project.update({
       where: { id },
-      data: { ...(name ? { name } : {}), ...(files ? { files } : {}) },
+      data: {
+        ...(name ? { name } : {}),
+        ...(files ? { files: toJson(files) } : {}),
+      },
     });
     return NextResponse.json({ id: updated.id, name: updated.name, updatedAt: updated.updatedAt });
   } catch {
@@ -61,8 +68,8 @@ export async function POST(req: NextRequest) {
         name: `${src.name} (copy)`,
         prompt: src.prompt,
         framework: src.framework,
-        files: src.files,
-        history: src.history,
+        files: toJson(src.files),
+        history: toJson(src.history),
       },
     });
     return NextResponse.json({ id: copy.id, name: copy.name });
@@ -70,5 +77,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Duplicate failed." }, { status: 500 });
   }
 }
-
-export interface FileEntryRef extends FileEntry {}
