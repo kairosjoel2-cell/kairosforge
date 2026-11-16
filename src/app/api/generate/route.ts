@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSessionUserId } from "@/lib/auth";
-import { generateWebsite, GenFile } from "@/lib/ai";
+import { generateWebsite } from "@/lib/ai";
+
+/** Convert plain JS data into a value Prisma accepts for a Json column. */
+function toJson(value: unknown): Prisma.InputJsonValue {
+  return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
+}
 
 export async function POST(req: NextRequest) {
   const userId = await getSessionUserId();
@@ -21,7 +27,7 @@ export async function POST(req: NextRequest) {
         name: options?.name || prompt.slice(0, 60),
         prompt,
         framework: options?.mode || "html",
-        files: result.files,
+        files: toJson(result.files),
         history: [],
       },
     });
@@ -34,5 +40,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
-
-export interface GenFileRef extends GenFile {}
