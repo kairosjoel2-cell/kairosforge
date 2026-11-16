@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { TEMPLATES } from "@/lib/templates";
@@ -103,5 +103,9 @@ function TemplatesInner() {
 }
 
 export default function TemplatesPage() {
-  return <TemplatesInner />;
+  return (
+    <Suspense fallback={<main className="min-h-screen flex items-center justify-center text-zinc-500">Loading templates…</main>}>
+      <TemplatesInner />
+    </Suspense>
+  );
 }
