@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSessionUserId } from "@/lib/auth";
 import { editWebsite } from "@/lib/ai";
 
 interface FileEntry { path: string; content: string }
+
+/** Convert plain JS data into a value Prisma accepts for a Json column. */
+function toJson(value: unknown): Prisma.InputJsonValue {
+  return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
+}
 
 export async function POST(req: NextRequest) {
   const userId = await getSessionUserId();
@@ -27,13 +33,16 @@ export async function POST(req: NextRequest) {
       else merged.push(nf);
     }
 
-    const history = Array.isArray(project.history) ? (project.history as unknown[]) : [];
+    const history: unknown[] = Array.isArray(project.history) ? (project.history as unknown[]) : [];
     const entry = { instruction, summary: result.summary, at: new Date().toISOString() };
     const newHistory = [...history, entry];
 
     await prisma.project.update({
       where: { id: project.id },
-      data: { files: merged, history: newHistory },
+      data: {
+        files: toJson(merged),
+        history: toJson(newHistory),
+      },
     });
 
     return NextResponse.json({ summary: result.summary, files: merged });
