@@ -1,0 +1,42 @@
+// KAIROSFORGE — Prisma schema
+// Run: npx prisma db push
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  createdAt DateTime @default(now())
+  projects  Project[]
+  settings  Json?
+  githubToken String? // encrypted at rest
+}
+
+model Project {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  prompt    String
+  framework String
+  files     Json     // [{ path, content }]
+  history   Json     @default("[]")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PromptHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  prompt    String
+  createdAt DateTime @default(now())
+}
